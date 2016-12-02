@@ -1,1 +1,3 @@
-const token = '';
+module.exports = Object.freeze({
+    TOEKEN: ''
+});
