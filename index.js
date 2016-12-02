@@ -1,15 +1,15 @@
-import secrets from './secrets';
+let secrets = require('./secrets');
 
-var Bot = require('slackbots');
+let Bot = require('slackbots');
 
 // create a bot
-var settings = {
+let settings = {
     token: secrets.token,
     name: 'FoosBot'
 };
-var bot = new Bot(settings);
+let bot = new Bot(settings);
 
-var params = {
+let params = {
     icon_emoji: ':robot_face:'
 };
 

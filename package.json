@@ -22,5 +22,8 @@
   "homepage": "git@github.com:jonoirwinrsa/FoosBot.git#readme",
   "dependencies": {
     "slackbots": "^0.5.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.18.0"
   }
 }
