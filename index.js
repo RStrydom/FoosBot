@@ -86,8 +86,7 @@ bot.on('message', function (data) {
 
     // get help
     else if (data.text.toUpperCase().startsWith("<@U3A62AGH4> HELP")) {
-        sendMessage("Hi there! I'm foosbot.\nMy job is pretty simple. Just say '@foos-bot I want to foos!' and I'll create a new game for you. The user that sent the message will be player 1 and the next 3 to reply '@foos-bot I'm in' will get a place in the game. Games expire after 2 minutes.\n Send '@foos-bot how many spots?' to see the number of places remaining in the current game.",
-        )
+        sendMessage("Hi there! I'm foosbot.\nMy job is pretty simple. Just say '@foos-bot I want to foos!' and I'll create a new game for you. The user that sent the message will be player 1 and the next 3 to reply '@foos-bot I'm in' will get a place in the game. Games expire after 2 minutes.\n Send '@foos-bot how many spots?' to see the number of places remaining in the current game.")
     }
 
     // ping
