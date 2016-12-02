@@ -1,3 +1,3 @@
 module.exports = Object.freeze({
-    TOEKEN: ''
+    TOKEN: ''
 });

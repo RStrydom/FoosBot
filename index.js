@@ -4,7 +4,7 @@ let Bot = require('slackbots');
 
 // create a bot
 let settings = {
-    token: secrets.TOEKEN,
+    token: secrets.TOKEN,
     name: 'FoosBot'
 };
 let bot = new Bot(settings);
