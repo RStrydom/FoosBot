@@ -1,0 +1,26 @@
+{
+  "name": "foosbot",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Simple slack bot for SovTech foos players",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:jonoirwinrsa/FoosBot.git"
+  },
+  "keywords": [
+    "foos",
+    "foosball",
+    "slack",
+    "bot"
+  ],
+  "author": "Jonathan Irwin",
+  "license": "UNLICENSED",
+  "homepage": "git@github.com:jonoirwinrsa/FoosBot.git#readme",
+  "dependencies": {
+    "slackbots": "^0.5.3"
+  }
+}
