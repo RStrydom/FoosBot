@@ -1,10 +1,9 @@
-const secrets = require('./secrets');
-
-const Bot = require('slackbots');
+import {TOKEN} from "./secrets";
+import Bot from "slackbots";
 
 // create a bot
 const settings = {
-    token: secrets.TOKEN,
+    token: TOKEN,
     name: 'FoosBot'
 };
 
@@ -36,11 +35,11 @@ function sendMessage(messageText) {
 
 bot.on('message', function (data) {
     // all ingoing events https://api.slack.com/rtm
-    console.log(data);
+    //console.log(data);
 
     // check that the message has text
     if (data.text) {
-        // start a new game
+        // start a new game if there isn't one in progress
         if (data.text.toUpperCase().startsWith('<@U3A62AGH4> I WANT TO FOOS')) {
             // check if there is a game running
             if (!gameInProgress) {

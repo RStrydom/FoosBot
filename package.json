@@ -24,6 +24,7 @@
     "slackbots": "^0.5.3"
   },
   "devDependencies": {
-    "babel-cli": "^6.18.0"
+    "babel-cli": "^6.18.0",
+    "babel-preset-latest": "^6.16.0"
   }
 }
