@@ -1,7 +1,8 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var TOKEN = exports.TOKEN = '';
+var apiAiAccessToken = exports.apiAiAccessToken = "";
+var slackBotKey = exports.slackBotKey = "";
 //# sourceMappingURL=secrets.dummy.js.map
