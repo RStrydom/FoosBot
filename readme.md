@@ -14,7 +14,7 @@ Run `npm i` to install the dependencies
 
 Install foreverJS globally `npm install forever -g`
 
-Run with `forever start dist/index.js`
+Run with `forever start dist/index.js > stdout.txt 2> stderr.txt &`
 
 Stop with `forever stop dist/index.js` or `forever stopall`
 
