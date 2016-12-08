@@ -1,0 +1,61 @@
+{
+  "userSays": [
+    {
+      "id": "7dcb3eda-5215-4399-bb9e-dc4be90876da",
+      "data": [
+        {
+          "text": "Start a new game"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "1ee647df-1030-4c9b-9cac-e58d0d2bf87d",
+      "data": [
+        {
+          "text": "I want to play a game of foosball"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "c2a6302d-880c-4c77-9337-3ccd14c7c33a",
+      "data": [
+        {
+          "text": "I want to foos"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    }
+  ],
+  "id": "f3e7fca0-d5e0-4425-bd6b-f0f6b8db94db",
+  "name": "I want to foos",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "start_game",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [
+        {
+          "type": 0,
+          "speech": [
+            "Alright! Lets go! The next 3 players to reply \"@foos-bot in\" will be in the next game.. Fastest foosers first!",
+            "Awesome! Lets go! We still need 3 more players before we can get started. Send \"@foos-bot I want in\" to join",
+            "Great! If you want in let me know quick.. Space is limited"
+          ]
+        }
+      ]
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": []
+}

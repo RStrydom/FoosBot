@@ -1,0 +1,117 @@
+{
+  "userSays": [
+    {
+      "id": "6822b115-eaef-4e49-917a-ed4d5a6453e4",
+      "data": [
+        {
+          "text": "I want in"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "5e0911b4-8e20-4675-ae20-e3190990326a",
+      "data": [
+        {
+          "text": "let me join"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "463e0965-5d20-44e2-8a36-d597dd91431a",
+      "data": [
+        {
+          "text": "I want to play in the game that is happening now"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "cdba6ec4-81a8-46f7-9b1a-7a979d084c0e",
+      "data": [
+        {
+          "text": "I want to play in the current game"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "19d792a0-1b17-4852-b609-d8fa5e893376",
+      "data": [
+        {
+          "text": "I want to join the current game"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "7e7ac7d5-99e1-4ef1-9e0b-5ff42f8f78db",
+      "data": [
+        {
+          "text": "in"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "73b8b730-ff64-4e02-ba8a-f9793d34d287",
+      "data": [
+        {
+          "text": "I will join"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "35e0bcb2-1814-45ce-b613-d73cfa8b611b",
+      "data": [
+        {
+          "text": "I\u0027m in"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "581bec6a-be05-4793-8450-b9cb68dd4ab8",
+      "data": [
+        {
+          "text": "Join existing game"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    }
+  ],
+  "id": "7b6241f3-dffb-475a-bbd3-bfc577c930b7",
+  "name": "in",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "join_current_game",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [
+        {
+          "type": 0,
+          "speech": []
+        }
+      ]
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": []
+}

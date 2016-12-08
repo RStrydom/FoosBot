@@ -1,0 +1,77 @@
+{
+  "userSays": [
+    {
+      "id": "dac2b355-bbbf-4670-a018-173f6c412c33",
+      "data": [
+        {
+          "text": "How much space is left"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "06af70b3-011a-40e8-bfb2-94547ef975ed",
+      "data": [
+        {
+          "text": "How many more players do we need"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "ec6cacc6-8dae-4989-b422-8d507dda14a3",
+      "data": [
+        {
+          "text": "How many users have joined"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "7e56bf32-0def-4d01-9902-25a9bcf60be1",
+      "data": [
+        {
+          "text": "How many places are there"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "b7032802-f97c-4804-913c-582fc44c2fd9",
+      "data": [
+        {
+          "text": "How many spaces are left"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    }
+  ],
+  "id": "32be4770-120d-41de-8a11-305fb3bd8772",
+  "name": "How much space is left",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "check_number_of_players_in_game",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [
+        {
+          "type": 0,
+          "speech": []
+        }
+      ]
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": []
+}

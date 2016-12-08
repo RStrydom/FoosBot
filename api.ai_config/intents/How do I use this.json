@@ -1,0 +1,57 @@
+{
+  "userSays": [
+    {
+      "id": "b3a0ac8b-156c-49bc-a2c0-c3aef18983f0",
+      "data": [
+        {
+          "text": "How do I use this"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "d0eaffa3-9ade-4425-a9b3-9557f0e0525f",
+      "data": [
+        {
+          "text": "How does this work"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    },
+    {
+      "id": "1890c025-068a-4eb5-ab7c-305a8227f1b0",
+      "data": [
+        {
+          "text": "Help"
+        }
+      ],
+      "isTemplate": false,
+      "count": 0
+    }
+  ],
+  "id": "9dabe03b-5ab6-4505-8d33-5c492799755d",
+  "name": "How do I use this",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "get_help",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [
+        {
+          "type": 0,
+          "speech": "Hi there! 👋  I\u0027m foosbot\n\nMy job is pretty simple. Just say \"@foos-bot I want to foos!\" and I\u0027ll create a new game for you. The user that sent the message will be player 1 and the next 3 to reply \"\u0027@foos-bot I\u0027m in\" will get a place in the game. Games expire after 5 minutes. Send \"@foos-bot how many spots?\" to see the number of places remaining in the current game."
+        }
+      ]
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": []
+}
