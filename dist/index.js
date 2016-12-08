@@ -66,7 +66,7 @@ function sendMessage(message, message_text) {
     }
 }
 
-controller.hears(['.*'], ['direct_message', 'direct_mention'], function (bot, message) {
+controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     try {
         if (message.type == 'message') {
             if (message.user == bot.identity.id) {
@@ -133,7 +133,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention'], function (bot, me
                                 }, 270000);
                                 gameInProgress = true;
                                 numberOfSpots = 3;
-                                sendMessage(message, 'Alright! Lets go! The next 3 players to reply "@foos-bot in" will be in the next game.. Fastest foosers first!');
+                                sendMessage(message, responseData.slack);
                             } else {
                                 sendMessage(message, 'Sorry there is already a game in progress.. Join that one or wait 5 minutes for it to expire..');
                             }
@@ -167,7 +167,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention'], function (bot, me
 
                                 // get help
                                 else if (action === "get_help") {
-                                        sendMessage(message, 'Hi there! I\'m foosbot.\nMy job is pretty simple. Just say \'@foos-bot I want to foos!\' and I\'ll create a new game for you. The user that sent the message will be player 1 and the next 3 to reply \'@foos-bot I\'m in\' will get a place in the game. Games expire after 5 minutes.\n Send \'@foos-bot how many spots?\' to see the number of places remaining in the current game.');
+                                        sendMessage(message, responseData.slack);
                                     } else if (isDefined(responseData) && isDefined(responseData.slack)) {
                                         try {
                                             bot.reply(message, responseData.slack);
