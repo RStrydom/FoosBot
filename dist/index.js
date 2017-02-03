@@ -66,6 +66,7 @@ function sendMessage(message, message_text) {
     }
 }
 
+// Listen for direction messages and all mentions @foos-bot
 controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     try {
         if (message.type == 'message') {
@@ -134,6 +135,11 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                 gameInProgress = true;
                                 numberOfSpots = 3;
                                 sendMessage(message, responseData.slack);
+
+                                // Add the person who sent the message to the game
+                                bot.api.users.info({ user: message.user }, function (error, response) {
+                                    playersInGame.push(response.user.name);
+                                });
                             } else {
                                 sendMessage(message, 'Sorry there is already a game in progress.. Join that one or wait 5 minutes for it to expire..');
                             }
@@ -144,6 +150,14 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                 if (gameInProgress) {
                                     if (numberOfSpots >= 0) {
                                         numberOfSpots--;
+                                        // Add the person who sent the message to the game
+                                        bot.api.users.info({ user: message.user }, function (error, response) {
+                                            playersInGame.push(response.user.name);
+                                            if (numberOfSpots === 0) {
+                                                shuffle(playersInGame);
+                                                sendMessage(message, "Here is a random team assignment if you would like to use it? " + playersInGame[0] + " & " + playersInGame[1] + " VS " + playersInGame[2] + " & " + playersInGame[3]);
+                                            }
+                                        });
                                     }
                                     if (numberOfSpots > 1) {
                                         sendMessage(message, numberOfSpots + ' more spots to go...');
@@ -194,4 +208,25 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
         console.error(err);
     }
 });
+
+function shuffle(array) {
+    var currentIndex = array.length,
+        temporaryValue = void 0,
+        randomIndex = void 0;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+    }
+
+    return array;
+}
 //# sourceMappingURL=index.js.map
