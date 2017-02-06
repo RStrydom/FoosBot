@@ -109,9 +109,8 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                         let responseData = response.result.fulfillment.data;
                         let action = response.result.action;
 
-                        if (action === "start_game") {
+                        if (action === "start_game" || action === "join_current_game") {
                             // start a new game if there isn't one in progress
-                            // check if there is a game running
                             if (!gameInProgress) {
                                 setTimeout(function () {
                                     // let users know that time is running out
@@ -128,7 +127,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                                 }, 270000);
                                 gameInProgress = true;
                                 numberOfSpots = 3;
-                                sendMessage(message, responseData.slack);
+                                sendMessage(message, responseText);
 
                                 // Add the person who sent the message to the game
                                 bot.api.users.info({user: message.user}, (error, response) => {
@@ -136,13 +135,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                                 });
 
                             } else {
-                                sendMessage(message, 'Sorry there is already a game in progress.. Join that one or wait 5 minutes for it to expire..');
-                            }
-                        }
-
-                        // join an existing game
-                        else if (action === "join_current_game") {
-                            if (gameInProgress) {
                                 if (numberOfSpots >= 0) {
                                     numberOfSpots--;
                                     // Add the person who sent the message to the game
@@ -167,9 +159,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                                 else if (numberOfSpots < 0) {
                                     sendMessage(message, 'Sorry you are too late but don\'t worry about it - its only natural selection.');
                                 }
-                            }
-                            else {
-                                sendMessage(message, 'There is no game in progress at the moment. You can send "@foos-bot I want to foos!" to start a new game...');
                             }
                         }
 

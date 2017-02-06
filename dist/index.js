@@ -115,9 +115,8 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                         var responseData = response.result.fulfillment.data;
                         var action = response.result.action;
 
-                        if (action === "start_game") {
+                        if (action === "start_game" || action === "join_current_game") {
                             // start a new game if there isn't one in progress
-                            // check if there is a game running
                             if (!gameInProgress) {
                                 setTimeout(function () {
                                     // let users know that time is running out
@@ -134,67 +133,58 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                 }, 270000);
                                 gameInProgress = true;
                                 numberOfSpots = 3;
-                                sendMessage(message, responseData.slack);
+                                sendMessage(message, responseText);
 
                                 // Add the person who sent the message to the game
                                 bot.api.users.info({ user: message.user }, function (error, response) {
                                     playersInGame.push(response.user.name);
                                 });
                             } else {
-                                sendMessage(message, 'Sorry there is already a game in progress.. Join that one or wait 5 minutes for it to expire..');
+                                if (numberOfSpots >= 0) {
+                                    numberOfSpots--;
+                                    // Add the person who sent the message to the game
+                                    bot.api.users.info({ user: message.user }, function (error, response) {
+                                        playersInGame.push(response.user.name);
+                                        if (numberOfSpots === 0) {
+                                            shuffle(playersInGame);
+                                            sendMessage(message, "Here is a random team assignment if you would like to use it? " + playersInGame[0] + " & " + playersInGame[1] + " VS " + playersInGame[2] + " & " + playersInGame[3]);
+                                        }
+                                    });
+                                }
+                                if (numberOfSpots > 1) {
+                                    sendMessage(message, numberOfSpots + ' more spots to go...');
+                                } else if (numberOfSpots === 1) {
+                                    sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!!');
+                                } else if (numberOfSpots === 0) {
+                                    sendMessage(message, 'Awesome! All spots are filled!');
+                                    gameInProgress = false;
+                                } else if (numberOfSpots < 0) {
+                                    sendMessage(message, 'Sorry you are too late but don\'t worry about it - its only natural selection.');
+                                }
                             }
                         }
 
-                        // join an existing game
-                        else if (action === "join_current_game") {
-                                if (gameInProgress) {
-                                    if (numberOfSpots >= 0) {
-                                        numberOfSpots--;
-                                        // Add the person who sent the message to the game
-                                        bot.api.users.info({ user: message.user }, function (error, response) {
-                                            playersInGame.push(response.user.name);
-                                            if (numberOfSpots === 0) {
-                                                shuffle(playersInGame);
-                                                sendMessage(message, "Here is a random team assignment if you would like to use it? " + playersInGame[0] + " & " + playersInGame[1] + " VS " + playersInGame[2] + " & " + playersInGame[3]);
-                                            }
-                                        });
-                                    }
-                                    if (numberOfSpots > 1) {
-                                        sendMessage(message, numberOfSpots + ' more spots to go...');
-                                    } else if (numberOfSpots === 1) {
-                                        sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!!');
-                                    } else if (numberOfSpots === 0) {
-                                        sendMessage(message, 'Awesome! All spots are filled!');
-                                        gameInProgress = false;
-                                    } else if (numberOfSpots < 0) {
-                                        sendMessage(message, 'Sorry you are too late but don\'t worry about it - its only natural selection.');
-                                    }
-                                } else {
-                                    sendMessage(message, 'There is no game in progress at the moment. You can send "@foos-bot I want to foos!" to start a new game...');
-                                }
+                        // check the number of spots remaining
+                        else if (action === "check_number_of_players_in_game") {
+                                sendMessage(message, 'There are ' + numberOfSpots + ' remaining...');
                             }
 
-                            // check the number of spots remaining
-                            else if (action === "check_number_of_players_in_game") {
-                                    sendMessage(message, 'There are ' + numberOfSpots + ' remaining...');
-                                }
-
-                                // get help
-                                else if (action === "get_help") {
-                                        sendMessage(message, responseData.slack);
-                                    } else if (isDefined(responseData) && isDefined(responseData.slack)) {
-                                        try {
-                                            bot.reply(message, responseData.slack);
-                                        } catch (err) {
-                                            bot.reply(message, err.message);
-                                        }
-                                    } else if (isDefined(responseText)) {
-                                        bot.reply(message, responseText, function (err, resp) {
-                                            if (err) {
-                                                console.error(err);
-                                            }
-                                        });
+                            // get help
+                            else if (action === "get_help") {
+                                    sendMessage(message, responseData.slack);
+                                } else if (isDefined(responseData) && isDefined(responseData.slack)) {
+                                    try {
+                                        bot.reply(message, responseData.slack);
+                                    } catch (err) {
+                                        bot.reply(message, err.message);
                                     }
+                                } else if (isDefined(responseText)) {
+                                    bot.reply(message, responseText, function (err, resp) {
+                                        if (err) {
+                                            console.error(err);
+                                        }
+                                    });
+                                }
                     }
                 });
 
