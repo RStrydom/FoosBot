@@ -84,9 +84,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                 var botId = '<@' + bot.identity.id + '>';
                 var userId = message.user;
 
-                console.log(requestText);
-                console.log(messageType);
-
                 if (requestText.indexOf(botId) > -1) {
                     requestText = requestText.replace(botId, '');
                 }
@@ -95,7 +92,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                     sessionIds.set(channel, _nodeUuid2.default.v1());
                 }
 
-                console.log('Start request ', requestText);
                 var request = apiAiService.textRequest(requestText, {
                     sessionId: sessionIds.get(channel),
                     contexts: [{
@@ -108,7 +104,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                 });
 
                 request.on('response', function (response) {
-                    console.log(response);
 
                     if (isDefined(response.result)) {
                         var responseText = response.result.fulfillment.speech;
@@ -180,23 +175,19 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                     }
                                 } else if (isDefined(responseText)) {
                                     bot.reply(message, responseText, function (err, resp) {
-                                        if (err) {
-                                            console.error(err);
-                                        }
+                                        if (err) {}
                                     });
                                 }
                     }
                 });
 
                 request.on('error', function (error) {
-                    return console.error(error);
+                    return;
                 });
                 request.end();
             }
         }
-    } catch (err) {
-        console.error(err);
-    }
+    } catch (err) {}
 });
 
 function shuffle(array) {
