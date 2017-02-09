@@ -127,6 +127,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                                 }, 270000);
                                 gameInProgress = true;
                                 numberOfSpots = 3;
+                                playersInGame = [];
                                 sendMessage(message, responseText);
 
                                 // Add the person who sent the message to the game
