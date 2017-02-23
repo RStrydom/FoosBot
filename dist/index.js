@@ -122,6 +122,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                     setTimeout(function () {
                                         if (gameInProgress) {
                                             gameInProgress = false;
+                                            playersInGame = [];
                                             sendMessage('Game closed before we got enough players');
                                         }
                                     }, 30000);
