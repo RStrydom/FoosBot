@@ -33,7 +33,8 @@ var apiAiService = (0, _apiai2.default)(_secrets.apiAiAccessToken, apiaiOptions)
 var sessionIds = new Map();
 
 var controller = _botkit2.default.slackbot({
-    debug: false
+    debug: false,
+    json_file_store: 'slackbot_storage'
     //include "log: false" to disable logging
 });
 
@@ -113,20 +114,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                         if (action === "start_game" || action === "join_current_game") {
                             // start a new game if there isn't one in progress
                             if (!gameInProgress) {
-                                setTimeout(function () {
-                                    // let users know that time is running out
-                                    if (numberOfSpots > 0) {
-                                        sendMessage('30 seconds to go and we need ' + numberOfSpots + ' more players...');
-                                    }
-                                    // close game if its been 5 mins and we didn't get enough players
-                                    setTimeout(function () {
-                                        if (gameInProgress) {
-                                            gameInProgress = false;
-                                            playersInGame = [];
-                                            sendMessage('Game closed before we got enough players');
-                                        }
-                                    }, 30000);
-                                }, 270000);
                                 gameInProgress = true;
                                 numberOfSpots = 3;
                                 playersInGame = [];
@@ -136,29 +123,49 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                 bot.api.users.info({ user: message.user }, function (error, response) {
                                     playersInGame.push(response.user.name);
                                 });
-                            } else {
-                                if (numberOfSpots >= 0) {
-                                    numberOfSpots--;
-                                    // Add the person who sent the message to the game
+
+                                // Start the timer - games only last 5 mins
+                                setTimeout(function () {
+                                    // let users know that time is running out
+                                    if (numberOfSpots > 0) {
+                                        sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players...');
+                                    }
+                                    // close game if its been 5 mins and we didn't get enough players
+                                    setTimeout(function () {
+                                        if (gameInProgress) {
+                                            gameInProgress = false;
+                                            playersInGame = [];
+                                            sendMessage(message, 'Game closed before we got enough players');
+                                        }
+                                    }, 30000);
+                                }, 270000);
+                            }
+                            // Join the current game if there is one in progress
+                            else {
                                     bot.api.users.info({ user: message.user }, function (error, response) {
-                                        playersInGame.push(response.user.name);
-                                        if (numberOfSpots === 0) {
-                                            shuffle(playersInGame);
-                                            sendMessage(message, "Here is a random team assignment if you would like to use it? " + playersInGame[0] + " & " + playersInGame[1] + " VS " + playersInGame[2] + " & " + playersInGame[3]);
+                                        // Don't let a user join the same game twice
+                                        if (arrayContains(response.user.name, playersInGame)) {
+                                            sendMessage(message, 'You are already in the game. You can\'t join twice.');
+                                        } else {
+                                            numberOfSpots--;
+                                            playersInGame.push(response.user.name);
+                                            if (numberOfSpots > 1) {
+                                                sendMessage(message, numberOfSpots + ' more spots to go...');
+                                            } else if (numberOfSpots === 1) {
+                                                sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!!');
+                                            } else if (numberOfSpots === 0) {
+                                                sendMessage(message, 'Awesome! All spots are filled!');
+                                                gameInProgress = false;
+                                                shuffle(playersInGame);
+                                                sendMessage(message, "Here is a random team assignment if you would like to use it? " + playersInGame[0] + " & " + playersInGame[1] + " VS " + playersInGame[2] + " & " + playersInGame[3]);
+                                                // Save the number of games played to the local db
+                                                playersInGame.forEach(function (username) {
+                                                    updateNumberOfGamesPlayed(username);
+                                                });
+                                            }
                                         }
                                     });
                                 }
-                                if (numberOfSpots > 1) {
-                                    sendMessage(message, numberOfSpots + ' more spots to go...');
-                                } else if (numberOfSpots === 1) {
-                                    sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!!');
-                                } else if (numberOfSpots === 0) {
-                                    sendMessage(message, 'Awesome! All spots are filled!');
-                                    gameInProgress = false;
-                                } else if (numberOfSpots < 0) {
-                                    sendMessage(message, 'Sorry you are too late but don\'t worry about it - its only natural selection.');
-                                }
-                            }
                         }
 
                         // check the number of spots remaining
@@ -168,7 +175,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
 
                             // get help
                             else if (action === "get_help") {
-                                    sendMessage(message, responseData.slack);
+                                    sendMessage(message, responseText);
                                 } else if (isDefined(responseData) && isDefined(responseData.slack)) {
                                     try {
                                         bot.reply(message, responseData.slack);
@@ -177,21 +184,30 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                                     }
                                 } else if (isDefined(responseText)) {
                                     bot.reply(message, responseText, function (err, resp) {
-                                        if (err) {}
+                                        if (err) {
+                                            console.error(err);
+                                        }
                                     });
                                 }
                     }
                 });
 
                 request.on('error', function (error) {
-                    return;
+                    return console.error(error);
                 });
                 request.end();
             }
         }
-    } catch (err) {}
+    } catch (err) {
+        console.error(err);
+    }
 });
 
+/**
+ * Shuffles an array
+ * @param array
+ * @returns {*}
+ */
 function shuffle(array) {
     var currentIndex = array.length,
         temporaryValue = void 0,
@@ -211,5 +227,49 @@ function shuffle(array) {
     }
 
     return array;
+}
+
+/**
+ * Saves the number of games played to a local db
+ * @param username
+ */
+function updateNumberOfGamesPlayed(username) {
+    controller.storage.users.get(username, function (err, user_data) {
+        if (user_data) {
+            controller.storage.users.save({
+                id: username,
+                numberOfGamesPlayed: (parseInt(user_data.numberOfGamesPlayed, 10) + 1).toString()
+            }, function (err) {
+                if (err) {
+                    console.log(err, 'user data not saved');
+                }
+            });
+        } else {
+            controller.storage.users.save({ id: username, numberOfGamesPlayed: 1 }, function (err) {
+                if (err) {
+                    console.log(err, 'user data not saved');
+                }
+            });
+        }
+    });
+}
+
+/**
+ * Check if a string is in an array
+ * @param string
+ * @param array
+ * @returns {boolean}
+ */
+function arrayContains(string, array) {
+    return array.indexOf(string) > -1;
+}
+
+/**
+ * Returns the data about the number of games played for all users
+ */
+function getAllPlayersNumberOfGames() {
+    controller.storage.users.all(function (err, all_user_data) {
+        return all_user_data;
+    });
 }
 //# sourceMappingURL=index.js.map
