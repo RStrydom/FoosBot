@@ -56,7 +56,7 @@ function sendMessage (message, messageText) {
 }
 
 // Listen for direction messages and all mentions @foos-bot
-controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot, message) => {
+controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, message) => {
   try {
     if (message.type === 'message') {
       if (message.user === bot.identity.id) {
@@ -94,7 +94,6 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
           })
 
         request.on('response', (response) => {
-
           if (isDefined(response.result)) {
             let responseText = response.result.fulfillment.speech
             let responseData = response.result.fulfillment.data
@@ -110,46 +109,52 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
 
                 // Add the person who sent the message to the game
                 bot.api.users.info({user: message.user}, (error, response) => {
+                  if (error) {
+                    console.log(error)
+                  }
                   playersInGame.push(response.user.name)
+
+                  // If user is ed mock him a little
+                  if (response.user.name === 'edwardvincent') {
+                    sendMessage(message, '@edwardvincent Are you sure that is wise? :flushed:')
+                  }
                 })
 
                 // Start the timer - games only last 5 mins
                 setTimeout(function () {
                   // let users know that time is running out
                   if (numberOfSpots > 0) {
-                    sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players...')
+                    sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players... :timer_clock: :timer_clock:')
                   }
                   // close game if its been 5 mins and we didn't get enough players
                   setTimeout(function () {
                     if (gameInProgress) {
                       gameInProgress = false
                       playersInGame = []
-                      sendMessage(message, 'Game closed before we got enough players')
+                      sendMessage(message, 'Game closed before we got enough players :cry:')
                     }
                   }, 30000)
                 }, 270000)
-              }
-              // Join the current game if there is one in progress
-              else {
+              } else { // Join the current game if there is one in progress
                 bot.api.users.info({user: message.user}, (error, response) => {
                   if (error) {
                     console.log(error)
                   }
                   // Don't let a user join the same game twice
                   if (arrayContains(response.user.name, playersInGame)) {
-                    sendMessage(message, 'You are already in the game. You can\'t join twice.')
+                    sendMessage(message, 'You are already in the game. You can\'t join twice. :no_entry_sign:')
                   } else {
                     numberOfSpots--
                     playersInGame.push(response.user.name)
                     if (numberOfSpots > 1) {
-                      sendMessage(message, numberOfSpots + ' more spots to go...')
+                      sendMessage(message, numberOfSpots + ' more spots to go... :timer_clock:')
                     } else if (numberOfSpots === 1) {
-                      sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!!')
+                      sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:')
                     } else if (numberOfSpots === 0) {
-                      sendMessage(message, 'Awesome! All spots are filled!')
+                      sendMessage(message, 'Awesome! All spots are filled! :+1:')
                       gameInProgress = false
                       shuffle(playersInGame)
-                      sendMessage(message, `Here is a random team assignment if you would like to use it? ${playersInGame[0]} & ${playersInGame[1]} VS ${playersInGame[2]} & ${playersInGame[3]}`)
+                      sendMessage(message, `Here is a random team assignment if you would like to use it? :foos: ${playersInGame[0]} & ${playersInGame[1]} VS :foos: ${playersInGame[2]} & ${playersInGame[3]}`)
                       // Save the number of games played to the local db
                       playersInGame.forEach((username) => {
                         updateNumberOfGamesPlayed(username)
@@ -158,16 +163,11 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention',], (bot,
                   }
                 })
               }
-            }
-
-            // check the number of spots remaining
-            else if (action === 'check_number_of_players_in_game') {
+            } else if (action === 'check_number_of_players_in_game') { // check the number of spots remaining
               sendMessage(message, 'There are ' + numberOfSpots + ' remaining...')
             } else if (action === 'get_help') {
               sendMessage(message, responseText)
-            }
-
-            else if (isDefined(responseData) && isDefined(responseData.slack)) {
+            } else if (isDefined(responseData) && isDefined(responseData.slack)) {
               try {
                 bot.reply(message, responseData.slack)
               } catch (err) {
@@ -205,7 +205,6 @@ function shuffle (array) {
 
   // While there remain elements to shuffle...
   while (currentIndex !== 0) {
-
     // Pick a remaining element...
     randomIndex = Math.floor(Math.random() * currentIndex)
     currentIndex -= 1
