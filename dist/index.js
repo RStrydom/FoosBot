@@ -157,14 +157,21 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                     } else if (numberOfSpots === 1) {
                       sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:');
                     } else if (numberOfSpots === 0) {
-                      sendMessage(message, 'Awesome! All spots are filled! :+1:');
-                      gameInProgress = false;
+                      sendMessage(message, 'Awesome! All spots are filled! :+1:'
+                      // Wait 30 seconds before allowing a new game to start so that we can catch users who were too slow
+                      );setTimeout(function () {
+                        if (gameInProgress) {
+                          gameInProgress = false;
+                        }
+                      }, 30000);
                       shuffle(playersInGame);
                       sendMessage(message, 'Here is a random team assignment if you would like to use it? :foos: ' + playersInGame[0] + ' & ' + playersInGame[1] + ' VS :foos: ' + playersInGame[2] + ' & ' + playersInGame[3]
                       // Save the number of games played to the local db
                       );playersInGame.forEach(function (username) {
                         updateNumberOfGamesPlayed(username);
                       });
+                    } else {
+                      sendMessage(message, ':no_good: too slow! :turtle: (are turtles slow or just tortoises?)');
                     }
                   }
                 });
