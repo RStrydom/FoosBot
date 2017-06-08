@@ -27,6 +27,8 @@
     "node-uuid": "^1.4.7"
   },
   "devDependencies": {
+    "babel-preset-env": "^1.5.2",
+    "standard": "^10.0.2",
     "babel-cli": "^6.18.0",
     "babel-plugin-transform-remove-console": "^6.8.0",
     "babel-preset-latest": "^6.16.0"
