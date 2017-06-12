@@ -46,6 +46,7 @@ var bot = controller.spawn({
 ();var numberOfSpots = 4;
 var playersInGame = [];
 var gameInProgress = false;
+var edInsults = ['@edwardvincent Are you sure that is wise? :flushed:', '@edwardvincent Are you sure? :flushed:', '@edwardvincent Really?!! :flushed:', '@edwardvincent When will you learn? :flushed:', '@edwardvincent It just makes me sad :cry:'];
 
 function isDefined(obj) {
   if (typeof obj === 'undefined') {
@@ -123,7 +124,8 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
 
                   // If user is ed mock him a little
                   );if (response.user.name === 'edwardvincent') {
-                    sendMessage(message, '@edwardvincent Are you sure that is wise? :flushed:');
+                    var randomInsultIndex = Math.floor(Math.random() * edInsults.length);
+                    sendMessage(message, edInsults[randomInsultIndex]);
                   }
                 }
 
@@ -165,7 +167,10 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                         }
                       }, 30000);
                       shuffle(playersInGame);
-                      sendMessage(message, 'Here is a random team assignment if you would like to use it? :foos: ' + playersInGame[0] + ' & ' + playersInGame[1] + ' VS :foos: ' + playersInGame[2] + ' & ' + playersInGame[3]
+                      sendMessage(message, 'Here is a random team assignment if you would like to use it?');
+                      sendMessage(message, ':foos: _' + playersInGame[0] + '_ *&* _' + playersInGame[1] + '_');
+                      sendMessage(message, ':vs:');
+                      sendMessage(message, ':foos: _' + playersInGame[2] + '_ *&* _' + playersInGame[3] + '_'
                       // Save the number of games played to the local db
                       );playersInGame.forEach(function (username) {
                         updateNumberOfGamesPlayed(username);
