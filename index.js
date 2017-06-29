@@ -33,6 +33,8 @@ let bot = controller.spawn({
 // Foos vars
 let numberOfSpots = 4
 let playersInGame = []
+let numberOfChallengeSpots = 2
+let challengers = []
 let gameInProgress = false
 let edInsults = [
   '@edwardvincent Are you sure that is wise? :flushed:',
@@ -111,6 +113,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
               if (!gameInProgress) {
                 gameInProgress = true
                 numberOfSpots = 3
+                numberOfChallengeSpots = 2
                 playersInGame = []
                 sendMessage(message, responseText)
 
@@ -175,9 +178,22 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
                       playersInGame.forEach((username) => {
                         updateNumberOfGamesPlayed(username)
                       })
-                    } else { sendMessage(message, `:no_good: too slow! :turtle: (are turtles slow or just tortoises?)`) }
+                    } else { sendMessage(message, `:no_good: too slow! :turtle:`) }
                   }
                 })
+              }
+            } else if (action === 'challenge_winners') { // challenge the winners of the last game
+              if (gameInProgress) {
+                if (numberOfSpots !== 0) {
+                  sendMessage(message, 'There is still space in the current game. Please join that instead of trying to challenge.')
+                } else if (numberOfChallengeSpots === 0) {
+                  sendMessage(message, 'Sorry, we already have 2 challengers')
+                } else {
+                  numberOfChallengeSpots--
+                  sendMessage(message, 'Ok great, you are in for the next game!')
+                }
+              } else {
+                sendMessage(message, 'Sorry there is no game in progress for you to challenge. Please be faster next time. The ability to challenge expires 30 seconds after the game is full')
               }
             } else if (action === 'check_number_of_players_in_game') { // check the number of spots remaining
               sendMessage(message, 'There are ' + numberOfSpots + ' remaining...')

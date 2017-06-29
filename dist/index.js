@@ -45,6 +45,8 @@ var bot = controller.spawn({
 // Foos vars
 ();var numberOfSpots = 4;
 var playersInGame = [];
+var numberOfChallengeSpots = 2;
+var challengers = [];
 var gameInProgress = false;
 var edInsults = ['@edwardvincent Are you sure that is wise? :flushed:', '@edwardvincent Are you sure? :flushed:', '@edwardvincent Really?!! :flushed:', '@edwardvincent When will you learn? :flushed:', '@edwardvincent It just makes me sad :cry:'];
 
@@ -114,6 +116,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
               if (!gameInProgress) {
                 gameInProgress = true;
                 numberOfSpots = 3;
+                numberOfChallengeSpots = 2;
                 playersInGame = [];
                 sendMessage(message, responseText
 
@@ -176,10 +179,24 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
                         updateNumberOfGamesPlayed(username);
                       });
                     } else {
-                      sendMessage(message, ':no_good: too slow! :turtle: (are turtles slow or just tortoises?)');
+                      sendMessage(message, ':no_good: too slow! :turtle:');
                     }
                   }
                 });
+              }
+            } else if (action === 'challenge_winners') {
+              // challenge the winners of the last game
+              if (gameInProgress) {
+                if (numberOfSpots !== 0) {
+                  sendMessage(message, 'There is still space in the current game. Please join that instead of trying to challenge.');
+                } else if (numberOfChallengeSpots === 0) {
+                  sendMessage(message, 'Sorry, we already have 2 challengers');
+                } else {
+                  numberOfChallengeSpots--;
+                  sendMessage(message, 'Ok great, you are in for the next game!');
+                }
+              } else {
+                sendMessage(message, 'Sorry there is no game in progress for you to challenge. Please be faster next time. The ability to challenge expires 30 seconds after the game is full');
               }
             } else if (action === 'check_number_of_players_in_game') {
               // check the number of spots remaining
