@@ -8,15 +8,30 @@ var _botkit = require('botkit');
 
 var _botkit2 = _interopRequireDefault(_botkit);
 
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
 var _htmlEntities = require('html-entities');
+
+var _http = require('http');
+
+var _http2 = _interopRequireDefault(_http);
 
 var _nodeUuid = require('node-uuid');
 
 var _nodeUuid2 = _interopRequireDefault(_nodeUuid);
 
+var _querystring = require('querystring');
+
+var _querystring2 = _interopRequireDefault(_querystring);
+
 var _secrets = require('./secrets');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// start the web server
+runWebServer();
 
 var decoder = new _htmlEntities.XmlEntities();
 
@@ -73,6 +88,26 @@ function sendMessage(message, messageText) {
 // Listen for direction messages and all mentions @foos-bot
 controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
   try {
+    var attachmentMessage = {
+      attachments: [{
+        title: 'Do you want to interact with my buttons?',
+        callback_id: '123',
+        attachment_type: 'default',
+        actions: [{
+          'name': 'yes',
+          'text': 'Yes',
+          'value': 'yes',
+          'type': 'button'
+        }, {
+          'name': 'no',
+          'text': 'No',
+          'value': 'no',
+          'type': 'button'
+        }]
+      }]
+    };
+    sendMessage(message, attachmentMessage);
+
     if (message.type === 'message') {
       if (message.user === bot.identity.id) {
         // message from bot can be skipped
@@ -291,5 +326,46 @@ function getAllPlayersNumberOfGames() {
     if (error) {}
     return allUserData;
   });
+}
+
+function runWebServer() {
+  var index = _fs2.default.readFileSync('index.html');
+
+  _http2.default.createServer(function (request, response) {
+    if (request.method === 'POST') {
+      processPost(request, response, function () {
+        // Use request.post here
+        response.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
+        response.end();
+      });
+    } else {
+      response.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
+      response.end(index);
+    }
+  }).listen(9615);
+}
+
+function processPost(request, response, callback) {
+  var queryData = '';
+  if (typeof callback !== 'function') return null;
+
+  if (request.method === 'POST') {
+    request.on('data', function (data) {
+      queryData += data;
+      if (queryData.length > 1e6) {
+        queryData = '';
+        response.writeHead(413, { 'Content-Type': 'text/plain' }).end();
+        request.connection.destroy();
+      }
+    });
+
+    request.on('end', function () {
+      request.post = _querystring2.default.parse(queryData);
+      callback();
+    });
+  } else {
+    response.writeHead(405, { 'Content-Type': 'text/plain' });
+    response.end();
+  }
 }
 //# sourceMappingURL=index.js.map

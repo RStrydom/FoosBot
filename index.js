@@ -2,9 +2,15 @@
 
 import apiai from 'apiai'
 import Botkit from 'botkit'
+import fs from 'fs'
 import { XmlEntities as Entities } from 'html-entities'
+import http from 'http'
 import uuid from 'node-uuid'
+import querystring from 'querystring'
 import { apiAiAccessToken, slackBotKey } from './secrets'
+
+// start the web server
+runWebServer()
 
 const decoder = new Entities()
 
@@ -298,4 +304,46 @@ function getAllPlayersNumberOfGames () {
     }
     return allUserData
   })
+}
+
+function runWebServer () {
+  const index = fs.readFileSync('index.html')
+
+  http.createServer(function (request, response) {
+    if (request.method === 'POST') {
+      processPost(request, response, function () {
+        console.log(request.post)
+        // Use request.post here
+        response.writeHead(200, 'OK', {'Content-Type': 'text/plain'})
+        response.end()
+      })
+    } else {
+      response.writeHead(200, 'OK', {'Content-Type': 'text/plain'})
+      response.end(index)
+    }
+  }).listen(9615)
+}
+
+function processPost (request, response, callback) {
+  let queryData = ''
+  if (typeof callback !== 'function') return null
+
+  if (request.method === 'POST') {
+    request.on('data', function (data) {
+      queryData += data
+      if (queryData.length > 1e6) {
+        queryData = ''
+        response.writeHead(413, {'Content-Type': 'text/plain'}).end()
+        request.connection.destroy()
+      }
+    })
+
+    request.on('end', function () {
+      request.post = querystring.parse(queryData)
+      callback()
+    })
+  } else {
+    response.writeHead(405, {'Content-Type': 'text/plain'})
+    response.end()
+  }
 }
