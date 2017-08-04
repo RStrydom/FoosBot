@@ -34,22 +34,26 @@ var sessionIds = new Map();
 
 var controller = _botkit2.default.slackbot({
   debug: false,
-  json_file_store: 'slackbot_storage'
+  json_file_store: './slackbot_storage'
   // include "log: false" to disable logging
 });
 
 var bot = controller.spawn({
   token: _secrets.slackBotKey
-}).startRTM
+}).startRTM();
 
-// Foos vars
-();var numberOfSpots = 4;
+// Game variables
+var numberOfSpots = 4;
 var playersInGame = [];
 var numberOfChallengeSpots = 2;
-var challengers = [];
 var gameInProgress = false;
 var edInsults = ['@edwardvincent Are you sure that is wise? :flushed:', '@edwardvincent Are you sure? :flushed:', '@edwardvincent Really?!! :flushed:', '@edwardvincent When will you learn? :flushed:', '@edwardvincent It just makes me sad :cry:'];
 
+/**
+ * Check if defined pollyfil
+ * @param obj
+ * @returns {boolean}
+ */
 function isDefined(obj) {
   if (typeof obj === 'undefined') {
     return false;
@@ -62,6 +66,11 @@ function isDefined(obj) {
   return obj !== null;
 }
 
+/**
+ * Generic function to send slack response
+ * @param message - object to give the message context
+ * @param messageText - text that will be sent
+ */
 function sendMessage(message, messageText) {
   try {
     bot.reply(message, messageText);
@@ -70,7 +79,10 @@ function sendMessage(message, messageText) {
   }
 }
 
-// Listen for direction messages and all mentions @foos-bot
+/**
+ * Listen for direction messages and all mentions @foos-bot
+ * Fire off the correct functions based on the type of request that was made
+ */
 controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
   try {
     if (message.type === 'message') {
@@ -114,90 +126,17 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
             if (action === 'start_game' || action === 'join_current_game') {
               // start a new game if there isn't one in progress
               if (!gameInProgress) {
-                gameInProgress = true;
-                numberOfSpots = 3;
-                numberOfChallengeSpots = 2;
-                playersInGame = [];
-                sendMessage(message, responseText
-
-                // Add the person who sent the message to the game
-                );bot.api.users.info({ user: message.user }, function (error, response) {
-                  if (error) {}
-                  playersInGame.push(response.user.name
-
-                  // If user is ed mock him a little
-                  );if (response.user.name === 'edwardvincent') {
-                    var randomInsultIndex = Math.floor(Math.random() * edInsults.length);
-                    sendMessage(message, edInsults[randomInsultIndex]);
-                  }
-                }
-
-                // Start the timer - games only last 5 mins
-                );setTimeout(function () {
-                  // let users know that time is running out
-                  if (numberOfSpots > 0) {
-                    sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players... :timer_clock: :timer_clock:');
-                  }
-                  // close game if its been 5 mins and we didn't get enough players
-                  setTimeout(function () {
-                    if (gameInProgress) {
-                      gameInProgress = false;
-                      playersInGame = [];
-                      sendMessage(message, 'Game closed before we got enough players :cry:');
-                    }
-                  }, 30000);
-                }, 270000);
+                startGame(message, responseText);
               } else {
                 // Join the current game if there is one in progress
-                bot.api.users.info({ user: message.user }, function (error, response) {
-                  if (error) {}
-                  // Don't let a user join the same game twice
-                  if (arrayContains(response.user.name, playersInGame)) {
-                    sendMessage(message, 'You are already in the game. You can\'t join twice. :no_entry_sign:');
-                  } else {
-                    numberOfSpots--;
-                    playersInGame.push(response.user.name);
-                    if (numberOfSpots > 1) {
-                      sendMessage(message, numberOfSpots + ' more spots to go... :timer_clock:');
-                    } else if (numberOfSpots === 1) {
-                      sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:');
-                    } else if (numberOfSpots === 0) {
-                      sendMessage(message, 'Awesome! All spots are filled! :+1:'
-                      // Wait 30 seconds before allowing a new game to start so that we can catch users who were too slow
-                      );setTimeout(function () {
-                        if (gameInProgress) {
-                          gameInProgress = false;
-                        }
-                      }, 30000);
-                      shuffle(playersInGame);
-                      sendMessage(message, 'Here is a random team assignment if you would like to use it?');
-                      sendMessage(message, ':foos: _' + playersInGame[0] + '_ *&* _' + playersInGame[1] + '_');
-                      sendMessage(message, ':vs:');
-                      sendMessage(message, ':foos: _' + playersInGame[2] + '_ *&* _' + playersInGame[3] + '_'
-                      // Save the number of games played to the local db
-                      );playersInGame.forEach(function (username) {
-                        updateNumberOfGamesPlayed(username);
-                      });
-                    } else {
-                      sendMessage(message, ':no_good: too slow! :turtle:');
-                    }
-                  }
-                });
+                joinGame(message, responseText);
               }
             } else if (action === 'challenge_winners') {
               // challenge the winners of the last game
-              if (gameInProgress) {
-                if (numberOfSpots !== 0) {
-                  sendMessage(message, 'There is still space in the current game. Please join that instead of trying to challenge.');
-                } else if (numberOfChallengeSpots === 0) {
-                  sendMessage(message, 'Sorry, we already have 2 challengers');
-                } else {
-                  numberOfChallengeSpots--;
-                  sendMessage(message, 'Ok great, you are in for the next game!');
-                }
-              } else {
-                sendMessage(message, 'Sorry there is no game in progress for you to challenge. Please be faster next time. The ability to challenge expires 30 seconds after the game is full');
-              }
+              challengeWinners(message, responseText);
+            } else if (action === 'show_leaderboard') {
+              // show who has played the most games
+              showLeaderboard(message, responseText);
             } else if (action === 'check_number_of_players_in_game') {
               // check the number of spots remaining
               sendMessage(message, 'There are ' + numberOfSpots + ' remaining...');
@@ -224,6 +163,126 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
       }
     }
   } catch (err) {}
+});
+
+/**
+ * Starts a new game
+ * @param message
+ * @param responseText
+ */
+function startGame(message, responseText) {
+  gameInProgress = true;
+  numberOfSpots = 3;
+  numberOfChallengeSpots = 2;
+  playersInGame = [];
+  sendMessage(message, responseText);
+
+  // Add the person who sent the message to the game
+  bot.api.users.info({ user: message.user }, function (error, response) {
+    if (error) {}
+    playersInGame.push(response.user.name);
+
+    // If user is ed mock him a little
+    if (response.user.name === 'edwardvincent') {
+      var randomInsultIndex = Math.floor(Math.random() * edInsults.length);
+      sendMessage(message, edInsults[randomInsultIndex]);
+    }
+  });
+
+  // Start the timer - games only last 5 mins
+  setTimeout(function () {
+    // let users know that time is running out
+    if (numberOfSpots > 0) {
+      sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players... :timer_clock: :timer_clock:');
+    }
+    // close game if its been 5 mins and we didn't get enough players
+    setTimeout(function () {
+      if (gameInProgress) {
+        gameInProgress = false;
+        playersInGame = [];
+        sendMessage(message, 'Game closed before we got enough players :cry:');
+      }
+    }, 30000);
+  }, 270000);
+}
+
+/**
+ * Join an existing game
+ * @param message
+ * @param responseText
+ */
+function joinGame(message, responseText) {
+  bot.api.users.info({ user: message.user }, function (error, response) {
+    if (error) {}
+    // Don't let a user join the same game twice
+    if (arrayContains(response.user.name, playersInGame)) {
+      sendMessage(message, 'You are already in the game. You can\'t join twice. :no_entry_sign:');
+    } else {
+      numberOfSpots--;
+      playersInGame.push(response.user.name);
+      if (numberOfSpots > 1) {
+        sendMessage(message, numberOfSpots + ' more spots to go... :timer_clock:');
+      } else if (numberOfSpots === 1) {
+        sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:');
+      } else if (numberOfSpots === 0) {
+        sendMessage(message, 'Awesome! All spots are filled! :+1:');
+        // Wait 30 seconds before allowing a new game to start so that we can catch users who were too slow
+        setTimeout(function () {
+          if (gameInProgress) {
+            gameInProgress = false;
+          }
+        }, 30000);
+        shuffle(playersInGame);
+        sendMessage(message, 'Here is a random team assignment if you would like to use it?');
+        sendMessage(message, ':foos: _' + playersInGame[0] + '_ *&* _' + playersInGame[1] + '_');
+        sendMessage(message, ':vs:');
+        sendMessage(message, ':foos: _' + playersInGame[2] + '_ *&* _' + playersInGame[3] + '_');
+        // Save the number of games played to the local db
+        playersInGame.forEach(function (username) {
+          updateNumberOfGamesPlayed(username);
+        });
+      } else {
+        sendMessage(message, ':no_good: too slow! :turtle:');
+      }
+    }
+  });
+}
+
+/**
+ * Challenge the winners of the current game
+ * @param message
+ * @param responseText
+ */
+function challengeWinners(message, responseText) {
+  if (gameInProgress) {
+    if (numberOfSpots !== 0) {
+      sendMessage(message, 'There is still space in the current game. Please join that instead of trying to challenge.');
+    } else if (numberOfChallengeSpots === 0) {
+      sendMessage(message, 'Sorry, we already have 2 challengers');
+    } else {
+      numberOfChallengeSpots--;
+      sendMessage(message, 'Ok great, you are in for the next game!');
+    }
+  } else {
+    sendMessage(message, 'Sorry there is no game in progress for you to challenge. Please be faster next time. The ability to challenge expires 30 seconds after the game is full');
+  }
+}
+
+/**
+ * Fetches the stats around number of games played, sorts it and returns it as a message
+ * @param message
+ * @param responseText
+ */
+function showLeaderboard(message, responseText) {
+  controller.storage.users.all(function (error, allUserData) {
+    if (error) {}
+    var leaderboardMessage = '';
+    var sortedUserArray = sortByKey(allUserData, 'numberOfGamesPlayed');
+    sortedUserArray.map(function (user, index) {
+      leaderboardMessage += index + ') ' + user.id + ' *' + user.numberOfGamesPlayed + '* \n';
+    });
+    sendMessage(message, leaderboardMessage);
+  });
 }
 
 /**
@@ -231,7 +290,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
  * @param array
  * @returns {*}
  */
-);function shuffle(array) {
+function shuffle(array) {
   var currentIndex = array.length;
   var temporaryValue = void 0;
   var randomIndex = void 0;
@@ -284,12 +343,16 @@ function arrayContains(string, array) {
 }
 
 /**
- * Returns the data about the number of games played for all users
+ * Sort array (leaderboard) by key
+ * @param array
+ * @param key
+ * @returns {Array.<T>}
  */
-function getAllPlayersNumberOfGames() {
-  controller.storage.users.all(function (error, allUserData) {
-    if (error) {}
-    return allUserData;
+function sortByKey(array, key) {
+  return array.sort(function (a, b) {
+    var x = parseInt(a[key]);
+    var y = parseInt(b[key]);
+    return x > y ? -1 : x < y ? 1 : 0;
   });
 }
 //# sourceMappingURL=index.js.map
