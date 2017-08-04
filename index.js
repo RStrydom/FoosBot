@@ -279,7 +279,7 @@ function showLeaderboard (message, responseText) {
     let leaderboardMessage = ''
     let sortedUserArray = sortByKey(allUserData, 'numberOfGamesPlayed')
     sortedUserArray.map((user, index) => {
-      leaderboardMessage += `${index}) ${user.id} *${user.numberOfGamesPlayed}* \n`
+      leaderboardMessage += `${index + 1}) ${user.id} *${user.numberOfGamesPlayed}* \n`
     })
     sendMessage(message, leaderboardMessage)
   })

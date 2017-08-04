@@ -279,7 +279,7 @@ function showLeaderboard(message, responseText) {
     var leaderboardMessage = '';
     var sortedUserArray = sortByKey(allUserData, 'numberOfGamesPlayed');
     sortedUserArray.map(function (user, index) {
-      leaderboardMessage += index + ') ' + user.id + ' *' + user.numberOfGamesPlayed + '* \n';
+      leaderboardMessage += index + 1 + ') ' + user.id + ' *' + user.numberOfGamesPlayed + '* \n';
     });
     sendMessage(message, leaderboardMessage);
   });
