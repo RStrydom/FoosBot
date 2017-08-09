@@ -28,7 +28,9 @@ var _querystring2 = _interopRequireDefault(_querystring);
 
 var _secrets = require('./secrets');
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : { default: obj };
+}
 
 // start the web server
 runWebServer();
@@ -100,6 +102,26 @@ function sendMessage(message, messageText) {
  */
 controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
   try {
+    var attachmentMessage = {
+      attachments: [{
+        title: 'Do you want to interact with my buttons?',
+        callback_id: '123',
+        attachment_type: 'default',
+        actions: [{
+          'name': 'yes',
+          'text': 'Yes',
+          'value': 'yes',
+          'type': 'button'
+        }, {
+          'name': 'no',
+          'text': 'No',
+          'value': 'no',
+          'type': 'button'
+        }]
+      }]
+    };
+    sendMessage(message, attachmentMessage);
+
     if (message.type === 'message') {
       if (message.user === bot.identity.id) {
         // message from bot can be skipped
@@ -411,4 +433,5 @@ function processPost(request, response, callback) {
     response.end();
   }
 }
+//# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

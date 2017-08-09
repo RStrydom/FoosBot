@@ -3,3 +3,4 @@
 /dist/secrets.js.map
 node_modules
 .idea
+slackbot_storage

@@ -21,9 +21,9 @@
   "license": "UNLICENSED",
   "homepage": "git@github.com:jonoirwinrsa/FoosBot.git#readme",
   "dependencies": {
-    "apiai": "^2.0.0",
-    "botkit": "0.0.12",
     "fs": "^0.0.1-security",
+    "apiai": "^4.0.3",
+    "botkit": "^0.5.6",
     "html-entities": "^1.2.0",
     "http": "^0.0.0",
     "node-uuid": "^1.4.7",
