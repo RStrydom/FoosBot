@@ -55,10 +55,10 @@ var controller = _botkit2.default.slackbot({
 
 var bot = controller.spawn({
   token: _secrets.slackBotKey
-}).startRTM();
+}).startRTM
 
 // Game variables
-var numberOfSpots = 4;
+();var numberOfSpots = 4;
 var playersInGame = [];
 var numberOfChallengeSpots = 2;
 var gameInProgress = false;
@@ -178,34 +178,34 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], functi
       }
     }
   } catch (err) {}
-});
+}
 
 /**
  * Starts a new game
  * @param message
  * @param responseText
  */
-function startGame(message, responseText) {
+);function startGame(message, responseText) {
   gameInProgress = true;
   numberOfSpots = 3;
   numberOfChallengeSpots = 2;
   playersInGame = [];
-  sendMessage(message, responseText);
+  sendMessage(message, responseText
 
   // Add the person who sent the message to the game
-  bot.api.users.info({ user: message.user }, function (error, response) {
+  );bot.api.users.info({ user: message.user }, function (error, response) {
     if (error) {}
-    playersInGame.push(response.user.name);
+    playersInGame.push(response.user.name
 
     // If user is ed mock him a little
-    if (response.user.name === 'edwardvincent') {
+    );if (response.user.name === 'edwardvincent') {
       var randomInsultIndex = Math.floor(Math.random() * edInsults.length);
       sendMessage(message, edInsults[randomInsultIndex]);
     }
-  });
+  }
 
   // Start the timer - games only last 5 mins
-  setTimeout(function () {
+  );setTimeout(function () {
     // let users know that time is running out
     if (numberOfSpots > 0) {
       sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players... :timer_clock: :timer_clock:');
@@ -240,9 +240,9 @@ function joinGame(message, responseText) {
       } else if (numberOfSpots === 1) {
         sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:');
       } else if (numberOfSpots === 0) {
-        sendMessage(message, 'Awesome! All spots are filled! :+1:');
+        sendMessage(message, 'Awesome! All spots are filled! :+1:'
         // Wait 30 seconds before allowing a new game to start so that we can catch users who were too slow
-        setTimeout(function () {
+        );setTimeout(function () {
           if (gameInProgress) {
             gameInProgress = false;
           }
@@ -251,9 +251,9 @@ function joinGame(message, responseText) {
         sendMessage(message, 'Here is a random team assignment if you would like to use it?');
         sendMessage(message, ':foos: _' + playersInGame[0] + '_ *&* _' + playersInGame[1] + '_');
         sendMessage(message, ':vs:');
-        sendMessage(message, ':foos: _' + playersInGame[2] + '_ *&* _' + playersInGame[3] + '_');
+        sendMessage(message, ':foos: _' + playersInGame[2] + '_ *&* _' + playersInGame[3] + '_'
         // Save the number of games played to the local db
-        playersInGame.forEach(function (username) {
+        );playersInGame.forEach(function (username) {
           updateNumberOfGamesPlayed(username);
         });
       } else {
