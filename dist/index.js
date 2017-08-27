@@ -121,7 +121,7 @@ controller.on('interactive_message_callback', function (bot, message) {
             text: 'Awesome! All spots are filled! :+1:',
             attachments: [{
               title: 'Who won?',
-              text: ':foos: Black: @' + playersInGame[0] + ' & @' + playersInGame[1] + '\n\n                      :vs:\n\n                      :foos: White: @' + playersInGame[2] + ' & @' + playersInGame[3],
+              text: ':foos: Black: @' + playersInGame[0] + ' & @' + playersInGame[1] + '\n\n              :vs:\n\n              :foos: White: @' + playersInGame[2] + ' & @' + playersInGame[3],
               callback_id: message.user,
               attachment_type: 'default',
               color: '#09b600',

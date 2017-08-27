@@ -117,8 +117,8 @@ controller.on('interactive_message_callback', function (bot, message) {
             attachments: [{
               title: 'Who won?',
               text: `:foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
-                      :vs:\n
-                      :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+              :vs:\n
+              :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
               callback_id: message.user,
               attachment_type: 'default',
               color: '#09b600',
