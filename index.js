@@ -4,7 +4,7 @@ import apiai from 'apiai'
 import Botkit from 'botkit'
 import { XmlEntities as Entities } from 'html-entities'
 import uuid from 'node-uuid'
-import { apiAiAccessToken, slackBotKey } from './secrets'
+import { apiAiAccessToken, slackAppClientId, slackAppClientSecret } from './secrets'
 
 const decoder = new Entities()
 
@@ -21,18 +21,38 @@ const apiAiService = apiai(apiAiAccessToken, apiaiOptions)
 const sessionIds = new Map()
 
 const controller = Botkit.slackbot({
-  debug: false,
   json_file_store: './slackbot_storage'
-  // include "log: false" to disable logging
+}).configureSlackApp(
+  {
+    clientId: slackAppClientId,
+    clientSecret: slackAppClientSecret,
+    scopes: ['bot']
+  }
+)
+
+controller.setupWebserver(3000, function (err, webserver) {
+  controller.createWebhookEndpoints(controller.webserver)
+  controller.createOauthEndpoints(controller.webserver, function (err, req, res) {
+    if (err) {
+      res.status(500).send('ERROR: ' + err)
+    } else {
+      res.send('Success!')
+    }
+  })
 })
 
-let bot = controller.spawn({
-  token: slackBotKey
-}).startRTM()
+// just a simple way to make sure we don't
+// connect to the RTM twice for the same team
+let _bots = {}
+
+function trackBot (bot) {
+  _bots[bot.config.token] = bot
+}
 
 // Game variables
 let numberOfSpots = 4
 let playersInGame = []
+let challengers = []
 let numberOfChallengeSpots = 2
 let gameInProgress = false
 let edInsults = [
@@ -42,6 +62,191 @@ let edInsults = [
   '@edwardvincent When will you learn? :flushed:',
   '@edwardvincent It just makes me sad :cry:'
 ]
+
+controller.on('interactive_message_callback', function (bot, message) {
+  let reply
+  bot.api.users.info({user: message.user}, (error, response) => {
+    let {name} = response.user
+    if (arrayContains(name, playersInGame) && false) {
+      bot.reply(message, `@${name} You are already in the game. You can't join twice. :no_entry_sign:`)
+    } else {
+      updateNumberOfGamesPlayed(name)
+      if (name === 'edwardvincent') {
+        let randomInsultIndex = Math.floor(Math.random() * edInsults.length)
+        bot.reply(message, edInsults[randomInsultIndex])
+      }
+
+      if (message.actions[0].name === 'join') {
+        let responseMessage = ''
+
+        numberOfSpots--
+        playersInGame.push(name)
+        if (numberOfSpots > 1) {
+          responseMessage = `${numberOfSpots} more spots to go... :timer_clock: @${name} - joined`
+        } else if (numberOfSpots === 1) {
+          responseMessage = `${numberOfSpots} more spot to go! Ahhhhh!!! :scream_cat: @${name} - joined`
+        } else {
+          responseMessage = `:no_good: too slow! :turtle:`
+        }
+
+        reply = {
+          text: responseMessage,
+          attachments: [{
+            title: 'Click to join while there is space!',
+            callback_id: message.user,
+            attachment_type: 'default',
+            color: '#09b600',
+            actions: [{
+              'name': 'join',
+              'style': 'primary',
+              'text': ':tada: Join',
+              'value': '1',
+              'type': 'button'
+            }]
+          }, {
+            title: 'Players in the game:',
+            text: `${playersInGame[0]} ${playersInGame[1]} ${playersInGame[2] ? playersInGame[2] : ''}`,
+            color: '#4942ff'
+          }]
+        }
+
+        if (numberOfSpots === 0) {
+          shuffle(playersInGame)
+          reply = {
+            text: 'Awesome! All spots are filled! :+1:',
+            attachments: [{
+              title: 'Who won?',
+              text: `:foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
+              :vs:\n
+              :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+              callback_id: message.user,
+              attachment_type: 'default',
+              color: '#09b600',
+              actions: [{
+                'name': 'black_won',
+                'style': 'primary',
+                'text': 'Black won',
+                'value': '1',
+                'type': 'button'
+              }, {
+                'name': 'white_won',
+                'style': 'primary',
+                'text': 'White won',
+                'value': '1',
+                'type': 'button'
+              }, {
+                'name': 'challenge',
+                'style': 'primary',
+                'text': `Challenge`,
+                'value': '1',
+                'type': 'button'
+              }]
+            }]
+          }
+        }
+      } else if (message.actions[0].name === 'black_won' || message.actions[0].name === 'white_won') {
+        // TODO increment the winner count
+        gameInProgress = false
+        playersInGame = []
+        reply = {
+          text: 'Congrats',
+          attachments: []
+        }
+      } else {
+        numberOfChallengeSpots--
+        challengers.push(name)
+        reply = {
+          text: `Challenge  @${name} - challenged`,
+          attachments: [{
+            title: 'Who won?',
+            text: `Here is a random team assignment if you would like to use it?\n
+          :foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
+          :vs:\n
+          :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+            callback_id: message.user,
+            attachment_type: 'default',
+            color: '#09b600',
+            actions: [{
+              'name': 'join',
+              'style': 'primary',
+              'text': 'Black won',
+              'value': '1',
+              'type': 'button'
+            }, {
+              'name': 'join',
+              'style': 'primary',
+              'text': 'White won',
+              'value': '1',
+              'type': 'button'
+            }, {
+              'name': 'challenge',
+              'style': 'primary',
+              'text': `Challenge`,
+              'value': '2',
+              'type': 'button'
+            }]
+          }]
+        }
+      }
+
+      bot.replyInteractive(message, reply)
+    }
+  })
+})
+
+controller.on('create_bot', function (bot, config) {
+
+  if (_bots[bot.config.token]) {
+    // already online! do nothing.
+  } else {
+    bot.startRTM(function (err) {
+      if (!err) {
+        trackBot(bot)
+      }
+
+      bot.startPrivateConversation({user: config.createdBy}, function (err, convo) {
+        if (err) {
+          console.log(err)
+        } else {
+          convo.say('I am a bot that has just joined your team')
+          convo.say('You must now /invite me to a channel so that I can be of use!')
+        }
+      })
+
+    })
+  }
+
+})
+
+// Handle events related to the websocket connection to Slack
+controller.on('rtm_open', function (bot) {
+  console.log('** The RTM api just connected!')
+})
+
+controller.on('rtm_close', function (bot) {
+  console.log('** The RTM api just closed')
+  // you may want to attempt to re-open
+})
+
+controller.storage.teams.all(function (err, teams) {
+
+  if (err) {
+    throw new Error(err)
+  }
+
+  // connect all teams with bots up to slack!
+  for (let t in teams) {
+    if (teams[t].bot) {
+      controller.spawn(teams[t]).startRTM(function (err, bot) {
+        if (err) {
+          console.log('Error connecting bot to Slack:', err)
+        } else {
+          trackBot(bot)
+        }
+      })
+    }
+  }
+})
 
 /**
  * Check if defined pollyfil
@@ -58,19 +263,6 @@ function isDefined (obj) {
   }
 
   return obj !== null
-}
-
-/**
- * Generic function to send slack response
- * @param message - object to give the message context
- * @param messageText - text that will be sent
- */
-function sendMessage (message, messageText) {
-  try {
-    bot.reply(message, messageText)
-  } catch (err) {
-    bot.reply(message, err.message)
-  }
 }
 
 /**
@@ -120,29 +312,31 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
             let responseData = response.result.fulfillment.data
             let action = response.result.action
 
-            if (action === 'start_game' || action === 'join_current_game') {
+            if (action === 'start_game' || action === 'join_game') {
               // start a new game if there isn't one in progress
               if (!gameInProgress) {
-                startGame(message, responseText)
+                startGame(bot, message)
               } else { // Join the current game if there is one in progress
-                joinGame(message, responseText)
+                bot.reply(message, 'There is already a game in progress -  please join that one')
               }
-            } else if (action === 'challenge_winners') { // challenge the winners of the last game
-              challengeWinners(message, responseText)
             } else if (action === 'show_leaderboard') { // show who has played the most games
-              showLeaderboard(message, responseText)
+              showLeaderboard(bot, message, responseText)
             } else if (action === 'check_number_of_players_in_game') { // check the number of spots remaining
-              sendMessage(message, 'There are ' + numberOfSpots + ' remaining...')
+              if (!gameInProgress) {
+                bot.reply(message, 'There is no game in progress - so 4 spots')
+              } else {
+                bot.reply(message, 'There are ' + numberOfSpots + ' remaining...')
+              }
             } else if (action === 'get_help') {
-              sendMessage(message, responseText)
+              bot.reply(message, responseText)
             } else if (isDefined(responseData) && isDefined(responseData.slack)) {
               try {
                 bot.reply(message, responseData.slack)
               } catch (err) {
-                bot.reply(message, err.message)
+                bot.reply(err.message)
               }
             } else if (isDefined(responseText)) {
-              bot.reply(message, responseText, (err, resp) => {
+              bot.reply(responseText, (err, resp) => {
                 if (err) {
                   console.error(err)
                 }
@@ -164,106 +358,40 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
 /**
  * Starts a new game
  * @param message
- * @param responseText
  */
-function startGame (message, responseText) {
+function startGame (bot, message) {
   gameInProgress = true
   numberOfSpots = 3
   numberOfChallengeSpots = 2
   playersInGame = []
-  sendMessage(message, responseText)
+  challengers = []
 
-  // Add the person who sent the message to the game
   bot.api.users.info({user: message.user}, (error, response) => {
-    if (error) {
-      console.log(error)
-    }
-    playersInGame.push(response.user.name)
-
-    // If user is ed mock him a little
-    if (response.user.name === 'edwardvincent') {
-      let randomInsultIndex = Math.floor(Math.random() * edInsults.length)
-      sendMessage(message, edInsults[randomInsultIndex])
-    }
-  })
-
-  // Start the timer - games only last 5 mins
-  setTimeout(function () {
-    // let users know that time is running out
-    if (numberOfSpots > 0) {
-      sendMessage(message, '30 seconds to go and we need ' + numberOfSpots + ' more players... :timer_clock: :timer_clock:')
-    }
-    // close game if its been 5 mins and we didn't get enough players
-    setTimeout(function () {
-      if (gameInProgress) {
-        gameInProgress = false
-        playersInGame = []
-        sendMessage(message, 'Game closed before we got enough players :cry:')
-      }
-    }, 30000)
-  }, 270000)
-}
-
-/**
- * Join an existing game
- * @param message
- * @param responseText
- */
-function joinGame (message, responseText) {
-  bot.api.users.info({user: message.user}, (error, response) => {
-    if (error) {
-      console.log(error)
-    }
-    // Don't let a user join the same game twice
-    if (arrayContains(response.user.name, playersInGame)) {
-      sendMessage(message, 'You are already in the game. You can\'t join twice. :no_entry_sign:')
-    } else {
-      numberOfSpots--
-      playersInGame.push(response.user.name)
-      if (numberOfSpots > 1) {
-        sendMessage(message, numberOfSpots + ' more spots to go... :timer_clock:')
-      } else if (numberOfSpots === 1) {
-        sendMessage(message, numberOfSpots + ' more spot to go! Ahhhhh!!! :scream_cat:')
-      } else if (numberOfSpots === 0) {
-        sendMessage(message, 'Awesome! All spots are filled! :+1:')
-        // Wait 30 seconds before allowing a new game to start so that we can catch users who were too slow
-        setTimeout(function () {
-          if (gameInProgress) {
-            gameInProgress = false
+    let reply = {
+      text: `New game created by  @${response.user.name} :tada:`,
+      attachments: [{
+        title: 'Click to join while there is space!',
+        callback_id: message.user,
+        attachment_type: 'default',
+        color: '#09b600',
+        actions: [
+          {
+            'name': 'join',
+            'style': 'primary',
+            'text': ':tada: Join',
+            'value': '1',
+            'type': 'button'
           }
-        }, 30000)
-        shuffle(playersInGame)
-        sendMessage(message, `Here is a random team assignment if you would like to use it?`)
-        sendMessage(message, `:foos: _${playersInGame[0]}_ *&* _${playersInGame[1]}_`)
-        sendMessage(message, `:vs:`)
-        sendMessage(message, `:foos: _${playersInGame[2]}_ *&* _${playersInGame[3]}_`)
-        // Save the number of games played to the local db
-        playersInGame.forEach((username) => {
-          updateNumberOfGamesPlayed(username)
-        })
-      } else { sendMessage(message, `:no_good: too slow! :turtle:`) }
+        ]
+      }]
     }
-  })
-}
 
-/**
- * Challenge the winners of the current game
- * @param message
- * @param responseText
- */
-function challengeWinners (message, responseText) {
-  if (gameInProgress) {
-    if (numberOfSpots !== 0) {
-      sendMessage(message, 'There is still space in the current game. Please join that instead of trying to challenge.')
-    } else if (numberOfChallengeSpots === 0) {
-      sendMessage(message, 'Sorry, we already have 2 challengers')
-    } else {
-      numberOfChallengeSpots--
-      sendMessage(message, 'Ok great, you are in for the next game!')
-    }
-  } else {
-    sendMessage(message, 'Sorry there is no game in progress for you to challenge. Please be faster next time. The ability to challenge expires 30 seconds after the game is full')
-  }
+    bot.reply(message, reply)
+
+    // Add the person who sent the message to the game
+    playersInGame.push(response.user.name)
+    updateNumberOfGamesPlayed(response.user.name)
+  })
 }
 
 /**
@@ -271,7 +399,7 @@ function challengeWinners (message, responseText) {
  * @param message
  * @param responseText
  */
-function showLeaderboard (message, responseText) {
+function showLeaderboard (bot, message) {
   controller.storage.users.all((error, allUserData) => {
     if (error) {
       console.log(error)
@@ -281,7 +409,7 @@ function showLeaderboard (message, responseText) {
     sortedUserArray.map((user, index) => {
       leaderboardMessage += `${index + 1}) ${user.id} *${user.numberOfGamesPlayed}* \n`
     })
-    sendMessage(message, leaderboardMessage)
+    bot.reply(message, leaderboardMessage)
   })
 }
 
