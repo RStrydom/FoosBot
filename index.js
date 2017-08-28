@@ -21,16 +21,17 @@ const apiAiService = apiai(apiAiAccessToken, apiaiOptions)
 const sessionIds = new Map()
 
 const controller = Botkit.slackbot({
+  debug: devConfig,
   json_file_store: './slackbot_storage'
 }).configureSlackApp(
   {
     clientId: slackAppClientId,
     clientSecret: slackAppClientSecret,
-    scopes: ['bot']
+    scopes: ['bot', 'commands']
   }
 )
 
-controller.setupWebserver(3000, function (err, webserver) {
+controller.setupWebserver(3000, (err, webserver) => {
   controller.createWebhookEndpoints(controller.webserver)
   controller.createOauthEndpoints(controller.webserver, function (err, req, res) {
     if (err) {
@@ -67,7 +68,7 @@ controller.on('interactive_message_callback', function (bot, message) {
   let reply
   bot.api.users.info({user: message.user}, (error, response) => {
     let {name} = response.user
-    if (arrayContains(name, playersInGame) && false) {
+    if (arrayContains(name, playersInGame) && !devConfig) {
       bot.reply(message, `@${name} You are already in the game. You can't join twice. :no_entry_sign:`)
     } else {
       updateNumberOfGamesPlayed(name)
@@ -145,13 +146,25 @@ controller.on('interactive_message_callback', function (bot, message) {
           }
         }
       } else if (message.actions[0].name === 'black_won' || message.actions[0].name === 'white_won') {
-        // TODO increment the winner count
+        if (message.actions[0].name === 'black_won') {
+          updateNumberOfWins(playersInGame[0])
+          updateNumberOfWins(playersInGame[1])
+          reply = {
+            text: `Congrats ${playersInGame[0]} & ${playersInGame[1]}`,
+            attachments: []
+          }
+        } else {
+          updateNumberOfWins(playersInGame[2])
+          updateNumberOfWins(playersInGame[3])
+          reply = {
+            text: `Congrats ${playersInGame[2]} & ${playersInGame[3]}`,
+            attachments: []
+          }
+        }
+
+        // Clear the game
         gameInProgress = false
         playersInGame = []
-        reply = {
-          text: 'Congrats',
-          attachments: []
-        }
       } else {
         numberOfChallengeSpots--
         challengers.push(name)
@@ -194,8 +207,7 @@ controller.on('interactive_message_callback', function (bot, message) {
   })
 })
 
-controller.on('create_bot', function (bot, config) {
-
+controller.on('create_bot', (bot, config) => {
   if (_bots[bot.config.token]) {
     // already online! do nothing.
   } else {
@@ -212,24 +224,21 @@ controller.on('create_bot', function (bot, config) {
           convo.say('You must now /invite me to a channel so that I can be of use!')
         }
       })
-
     })
   }
-
 })
 
 // Handle events related to the websocket connection to Slack
-controller.on('rtm_open', function (bot) {
+controller.on('rtm_open', bot => {
   console.log('** The RTM api just connected!')
 })
 
-controller.on('rtm_close', function (bot) {
+controller.on('rtm_close', bot => {
   console.log('** The RTM api just closed')
   // you may want to attempt to re-open
 })
 
-controller.storage.teams.all(function (err, teams) {
-
+controller.storage.teams.all((err, teams) => {
   if (err) {
     throw new Error(err)
   }
@@ -313,12 +322,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
             let action = response.result.action
 
             if (action === 'start_game' || action === 'join_game') {
-              // start a new game if there isn't one in progress
-              if (!gameInProgress) {
-                startGame(bot, message)
-              } else { // Join the current game if there is one in progress
-                bot.reply(message, 'There is already a game in progress -  please join that one')
-              }
+              startGame(bot, message)
             } else if (action === 'show_leaderboard') { // show who has played the most games
               showLeaderboard(bot, message, responseText)
             } else if (action === 'check_number_of_players_in_game') { // check the number of spots remaining
@@ -355,11 +359,28 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
   }
 })
 
+controller.on('slash_command', (bot, message) => {
+  if (message.command === '/new-foos') {
+    startGame(bot, message)
+  } else if (message.command === '/clear-all-foos') {
+    gameInProgress = false
+    numberOfSpots = 4
+    numberOfChallengeSpots = 2
+    playersInGame = []
+    challengers = []
+  }
+})
+
 /**
  * Starts a new game
+ * @param bot
  * @param message
  */
 function startGame (bot, message) {
+  // If there is a game in progress don't start a new one
+  if (gameInProgress) {
+    return bot.reply(message, 'There is already a game in progress -  please join that one')
+  }
   gameInProgress = true
   numberOfSpots = 3
   numberOfChallengeSpots = 2
@@ -396,8 +417,8 @@ function startGame (bot, message) {
 
 /**
  * Fetches the stats around number of games played, sorts it and returns it as a message
+ * @param bot
  * @param message
- * @param responseText
  */
 function showLeaderboard (bot, message) {
   controller.storage.users.all((error, allUserData) => {
@@ -458,6 +479,34 @@ function updateNumberOfGamesPlayed (username) {
       })
     } else {
       controller.storage.users.save({id: username, numberOfGamesPlayed: 1}, function (err) {
+        if (err) {
+          console.log(err, 'user data not saved')
+        }
+      })
+    }
+  })
+}
+
+/**
+ * Saves the number of games played to a local db
+ * @param username
+ */
+function updateNumberOfWins (username) {
+  controller.storage.users.get(username, (error, userData) => {
+    if (error) {
+      console.log(error)
+    }
+    if (userData) {
+      controller.storage.users.save({
+        id: username,
+        numberOfWins: (parseInt(userData.numberOfWins, 10) + 1).toString()
+      }, function (err) {
+        if (err) {
+          console.log(err, 'user data not saved')
+        }
+      })
+    } else {
+      controller.storage.users.save({id: username, numberOfWins: 1}, function (err) {
         if (err) {
           console.log(err, 'user data not saved')
         }
