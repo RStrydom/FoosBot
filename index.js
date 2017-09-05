@@ -68,16 +68,15 @@ controller.on('interactive_message_callback', function (bot, message) {
   let reply
   bot.api.users.info({user: message.user}, (error, response) => {
     let {name} = response.user
-    if (arrayContains(name, playersInGame) && !devConfig) {
-      bot.reply(message, `@${name} You are already in the game. You can't join twice. :no_entry_sign:`)
-    } else {
-      updateNumberOfGamesPlayed(name)
-      if (name === 'edwardvincent') {
-        let randomInsultIndex = Math.floor(Math.random() * edInsults.length)
-        bot.reply(message, edInsults[randomInsultIndex])
-      }
-
-      if (message.actions[0].name === 'join') {
+    if (message.actions[0].name === 'join') {
+      if (arrayContains(name, playersInGame) && !devConfig) {
+        bot.reply(message, `@${name} You are already in the game. You can't join twice. :no_entry_sign:`)
+      } else {
+        updateNumberOfGamesPlayed(name)
+        if (name === 'edwardvincent') {
+          let randomInsultIndex = Math.floor(Math.random() * edInsults.length)
+          bot.reply(message, edInsults[randomInsultIndex])
+        }
         let responseMessage = ''
 
         numberOfSpots--
@@ -112,6 +111,7 @@ controller.on('interactive_message_callback', function (bot, message) {
         }
 
         if (numberOfSpots === 0) {
+          bot.reply(message, `Let's go already! :bender:`)
           shuffle(playersInGame)
           reply = {
             text: 'Awesome! All spots are filled! :+1:',
@@ -145,65 +145,65 @@ controller.on('interactive_message_callback', function (bot, message) {
             }]
           }
         }
-      } else if (message.actions[0].name === 'black_won' || message.actions[0].name === 'white_won') {
-        if (message.actions[0].name === 'black_won') {
-          updateNumberOfWins(playersInGame[0])
-          updateNumberOfWins(playersInGame[1])
-          reply = {
-            text: `Congrats ${playersInGame[0]} & ${playersInGame[1]}`,
-            attachments: []
-          }
-        } else {
-          updateNumberOfWins(playersInGame[2])
-          updateNumberOfWins(playersInGame[3])
-          reply = {
-            text: `Congrats ${playersInGame[2]} & ${playersInGame[3]}`,
-            attachments: []
-          }
-        }
-
-        // Clear the game
-        gameInProgress = false
-        playersInGame = []
-      } else {
-        numberOfChallengeSpots--
-        challengers.push(name)
+      }
+    } else if (message.actions[0].name === 'black_won' || message.actions[0].name === 'white_won') {
+      if (message.actions[0].name === 'black_won') {
+        updateNumberOfWins(playersInGame[0])
+        updateNumberOfWins(playersInGame[1])
         reply = {
-          text: `Challenge  @${name} - challenged`,
-          attachments: [{
-            title: 'Who won?',
-            text: `Here is a random team assignment if you would like to use it?\n
-          :foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
-          :vs:\n
-          :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
-            callback_id: message.user,
-            attachment_type: 'default',
-            color: '#09b600',
-            actions: [{
-              'name': 'join',
-              'style': 'primary',
-              'text': 'Black won',
-              'value': '1',
-              'type': 'button'
-            }, {
-              'name': 'join',
-              'style': 'primary',
-              'text': 'White won',
-              'value': '1',
-              'type': 'button'
-            }, {
-              'name': 'challenge',
-              'style': 'primary',
-              'text': `Challenge`,
-              'value': '2',
-              'type': 'button'
-            }]
-          }]
+          text: `Congrats ${playersInGame[0]} & ${playersInGame[1]}`,
+          attachments: []
+        }
+      } else {
+        updateNumberOfWins(playersInGame[2])
+        updateNumberOfWins(playersInGame[3])
+        reply = {
+          text: `Congrats ${playersInGame[2]} & ${playersInGame[3]}`,
+          attachments: []
         }
       }
 
-      bot.replyInteractive(message, reply)
+      // Clear the game
+      gameInProgress = false
+      playersInGame = []
+    } else {
+      numberOfChallengeSpots--
+      challengers.push(name)
+      reply = {
+        text: `Challenge  @${name} - challenged`,
+        attachments: [{
+          title: 'Who won?',
+          text: `Here is a random team assignment if you would like to use it?\n
+          :foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
+          :vs:\n
+          :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+          callback_id: message.user,
+          attachment_type: 'default',
+          color: '#09b600',
+          actions: [{
+            'name': 'join',
+            'style': 'primary',
+            'text': 'Black won',
+            'value': '1',
+            'type': 'button'
+          }, {
+            'name': 'join',
+            'style': 'primary',
+            'text': 'White won',
+            'value': '1',
+            'type': 'button'
+          }, {
+            'name': 'challenge',
+            'style': 'primary',
+            'text': `Challenge`,
+            'value': '2',
+            'type': 'button'
+          }]
+        }]
+      }
     }
+
+    bot.replyInteractive(message, reply)
   })
 })
 
@@ -361,8 +361,10 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention'], (bot, 
 
 controller.on('slash_command', (bot, message) => {
   if (message.command === '/new-foos') {
+    bot.replyPrivate(message, 'Starting game...')
     startGame(bot, message)
   } else if (message.command === '/clear-all-foos') {
+    bot.replyPrivate(message, 'Clearing all games...')
     gameInProgress = false
     numberOfSpots = 4
     numberOfChallengeSpots = 2
