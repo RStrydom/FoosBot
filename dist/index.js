@@ -34,7 +34,7 @@ var sessionIds = new Map();
 
 var controller = _botkit2.default.slackbot({
   debug: devConfig,
-  json_file_store: './slackbot_storage'
+  json_file_store: 'slackbot_storage'
 }).configureSlackApp({
   clientId: _secrets.slackAppClientId,
   clientSecret: _secrets.slackAppClientSecret,

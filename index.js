@@ -22,7 +22,7 @@ const sessionIds = new Map()
 
 const controller = Botkit.slackbot({
   debug: devConfig,
-  json_file_store: './slackbot_storage'
+  json_file_store: 'slackbot_storage'
 }).configureSlackApp(
   {
     clientId: slackAppClientId,
