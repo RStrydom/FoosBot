@@ -191,7 +191,7 @@ controller.on('interactive_message_callback', function (bot, message) {
       };
     }
 
-    if (numberOfChallengeSpots > 0) {
+    if (gameInProgress && numberOfChallengeSpots > 0) {
       reply.actions.push({
         'name': 'challenge',
         'style': 'primary',
