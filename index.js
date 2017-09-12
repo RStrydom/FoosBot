@@ -22,7 +22,7 @@ const sessionIds = new Map()
 
 const controller = Botkit.slackbot({
   debug: devConfig,
-  json_file_store: 'slackbot_storage'
+  json_file_store: __dirname + '/slackbot_storage'
 }).configureSlackApp(
   {
     clientId: slackAppClientId,
@@ -117,9 +117,7 @@ controller.on('interactive_message_callback', function (bot, message) {
             text: 'Awesome! All spots are filled! :+1:',
             attachments: [{
               title: 'Who won?',
-              text: `:foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
-              :vs:\n
-              :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+              text: `:foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n:vs:\n:foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
               callback_id: message.user,
               attachment_type: 'default',
               color: '#09b600',
@@ -133,12 +131,6 @@ controller.on('interactive_message_callback', function (bot, message) {
                 'name': 'white_won',
                 'style': 'primary',
                 'text': 'White won',
-                'value': '1',
-                'type': 'button'
-              }, {
-                'name': 'challenge',
-                'style': 'primary',
-                'text': `Challenge`,
                 'value': '1',
                 'type': 'button'
               }]
@@ -170,13 +162,10 @@ controller.on('interactive_message_callback', function (bot, message) {
       numberOfChallengeSpots--
       challengers.push(name)
       reply = {
-        text: `Challenge  @${name} - challenged`,
+        text: `Challengers:  @${name} ${challengers[0] ? challengers[0] : ''}`,
         attachments: [{
           title: 'Who won?',
-          text: `Here is a random team assignment if you would like to use it?\n
-          :foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n
-          :vs:\n
-          :foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
+          text: `Here is a random team assignment if you would like to use it?\n:foos: Black: @${playersInGame[0]} & @${playersInGame[1]}\n:vs:\n:foos: White: @${playersInGame[2]} & @${playersInGame[3]}`,
           callback_id: message.user,
           attachment_type: 'default',
           color: '#09b600',
@@ -192,15 +181,19 @@ controller.on('interactive_message_callback', function (bot, message) {
             'text': 'White won',
             'value': '1',
             'type': 'button'
-          }, {
-            'name': 'challenge',
-            'style': 'primary',
-            'text': `Challenge`,
-            'value': '2',
-            'type': 'button'
           }]
         }]
       }
+    }
+
+    if (numberOfChallengeSpots > 0) {
+      reply.actions.push({
+        'name': 'challenge',
+        'style': 'primary',
+        'text': `Challenge`,
+        'value': '1',
+        'type': 'button'
+      })
     }
 
     bot.replyInteractive(message, reply)
